@@ -1,0 +1,49 @@
+command ::= (set|get|stored|read|description|getbyte|watch|ping|state|reset|item|progmode) WS*
+
+BEGIN_ARRAY          ::= WS* #x5B WS*  /* [ left square bracket */
+END_ARRAY            ::= WS* #x5D WS*  /* ] right square bracket */
+
+COMMA      ::= WS* #x2C WS*  /* , comma */
+COLON          ::= WS* ":" WS*
+Asterisk ::= #x2A
+Question ::= #x3F 
+
+WS          ::= [#x20#x09#x0A#x0D]+
+EOL         ::= [#x0A#x0D]+
+uint         ::= [0-9]*
+Number      ::= "-"? ("0" | [1-9] [0-9]*) ("." [0-9]+)? (("e" | "E") ( "-" | "+" )? ("0" | [1-9] [0-9]*))?
+String      ::= '"' [^"]* '"' | "'" [^']* "'"
+Null        ::= "null"
+Bool        ::= "true" | "false"
+
+Identifier  ::= ('$$' | '$' | [A-Za-z_])([A-Za-z0-9_]|'.')*
+
+Value ::= Number | String | Null | Bool
+
+DatapointValue ::= uint COLON Value
+DatapointValueArray  ::= BEGIN_ARRAY (DatapointValue WS* (COMMA DatapointValue)*)? END_ARRAY
+
+UIntArray ::= BEGIN_ARRAY (uint WS* (COMMA uint)*) END_ARRAY
+UIntList ::= (uint WS*)*
+
+IdentifierArray ::= BEGIN_ARRAY (Identifier WS* (COMMA Identifier)*) END_ARRAY
+IdentifierList ::= (Identifier WS*)*
+
+ItemArgs ::= ( Asterisk | IdentifierArray | IdentifierList )
+ 
+WatchCmdArg ::= ( uint COLON ( String | Identifier ))*
+WatchCmdArgArray ::= BEGIN_ARRAY ( WatchCmdArg WS* (COMMA WatchCmdArg)*)? END_ARRAY
+
+set ::= "set" WS* ( DatapointValue | DatapointValueArray )
+get ::= "get" WS* ( UIntList | UIntArray )
+stored ::= "stored" WS* ( UIntList | UIntArray )
+read ::= "read" WS* ( UIntList | UIntArray )
+description ::= "description" WS* ( Asterisk | ( UIntList | UIntArray ))
+getbyte ::= "byte" WS* ( UIntList | UIntArray )
+watch ::= "watch" WS* ( WatchCmdArg | WatchCmdArgArray )
+ping ::= "ping" WS*
+state ::= "state" WS*
+reset ::= "reset" WS*
+item ::= "item" WS* ( Asterisk | IdentifierList | IdentifierArray )
+progmode ::= "progmode" WS* ( Question | Value )
+

@@ -2,7 +2,7 @@ const fs = require("fs");
 const { Grammars } = require("ebnf");
 
 // init parser
-const grammar = fs.readFileSync("./grammar", "utf8");
+const grammar = fs.readFileSync(`${__dirname}/grammar`, "utf8");
 const parser = new Grammars.W3C.Parser(grammar);
 
 const processUIntListArgs = list => {

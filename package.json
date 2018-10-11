@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "bin": {
+    "bobaos-tool": "./bin/bobaos-tool.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,6 +14,7 @@
   "dependencies": {
     "bobaos.sub": "^1.0.1",
     "colors": "^1.3.2",
+    "commander": "^2.19.0",
     "ebnf": "^1.6.3"
   }
 }

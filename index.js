@@ -24,11 +24,24 @@ const App = params => {
     console_out(`Error with bobaos module: ${e.message}`);
   });
 
+  let commandlist = [];
+  commandlist.push("set", "get", "stored", "read", "description");
+  commandlist.push("watch", "unwatch");
+  commandlist.push("getbyte", "getitem", "progmode");
+  commandlist.push("ping", "state", "reset", "help");
+  function completer(line) {
+    const hits = commandlist.filter(c => c.startsWith(line));
+
+    // show all completions if none found
+    return [hits.length ? hits : commandlist, line];
+  }
+
   /// init repl
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: "bobaos> "
+    prompt: "bobaos> ",
+    completer: completer
   });
 
   const console_out = msg => {
@@ -88,7 +101,7 @@ const App = params => {
   bobaos.on("datapoint value", payload => {
     // if multiple values
     if (Array.isArray(payload)) {
-      console_out(payload.map(formatDatapointValue));
+      payload.map(formatDatapointValue).forEach(console_out);
 
       return;
     }

@@ -1,6 +1,19 @@
 const readline = require("readline");
 
+const colors = require("colors/safe");
+const Bobaos = require("bobaos.sub");
+
 const parseCmd = require("./parseCmd");
+
+let bobaos = Bobaos({ socketFile: "/var/run/myps/myipc.sock" });
+
+bobaos.on("connect", _ => {
+  console_out("connected to ipc, still not subscribed to channels");
+});
+
+bobaos.on("ready", _ => {
+  console_out("ready to send requests");
+});
 
 /// init repl
 const rl = readline.createInterface({
@@ -20,13 +33,17 @@ rl.prompt();
 
 console_out("hello, friend");
 
+// register datapoint value listener
+bobaos.on("datapoint value", payload => {
+  console_out(payload);
+});
 
 rl.on("line", line => {
   rl.prompt(true);
   try {
-    console_out(parseCmd(line))
+    console_out(parseCmd(line));
   } catch (e) {
-    console_out(e)
+    console_out(e);
   }
 }).on("close", () => {
   console.log("Have a great day, friend!");

@@ -144,7 +144,7 @@ const processIdentifierArgs = list => {
 
 const processItemCmd = cmdArgs => {
   let res = {
-    command: "item",
+    command: "getitem",
     args: []
   };
 
@@ -185,8 +185,12 @@ const processCmd = cmd => {
       return processDescriptionCmd(cmdArgs);
     case "watch":
       return processWatchCmd(cmdArgs);
-    case "item":
+    case "unwatch":
+      return processUIntListCmd(cmdType, cmdArgs);
+    case "getitem":
       return processItemCmd(cmdArgs);
+    case "help":
+      return { command: "help" };
     default:
       break;
   }

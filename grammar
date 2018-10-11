@@ -1,4 +1,4 @@
-command ::= (set|get|stored|read|description|getbyte|watch|ping|state|reset|item|progmode) WS*
+command ::= (set|get|stored|read|description|getbyte|watch|unwatch|ping|state|reset|getitem|progmode|help) WS*
 
 BEGIN_ARRAY          ::= WS* #x5B WS*  /* [ left square bracket */
 END_ARRAY            ::= WS* #x5D WS*  /* ] right square bracket */
@@ -41,9 +41,10 @@ read ::= "read" WS* ( UIntList | UIntArray )
 description ::= "description" WS* ( Asterisk | ( UIntList | UIntArray ))
 getbyte ::= "byte" WS* ( UIntList | UIntArray )
 watch ::= "watch" WS* ( WatchCmdArg | WatchCmdArgArray )
+unwatch ::= "unwatch" WS* ( UIntList | UIntArray )
 ping ::= "ping" WS*
 state ::= "state" WS*
 reset ::= "reset" WS*
-item ::= "item" WS* ( Asterisk | IdentifierList | IdentifierArray )
+getitem ::= "getitem" WS* ( Asterisk | IdentifierList | IdentifierArray )
 progmode ::= "progmode" WS* ( Question | Value )
-
+help ::= "help" WS*

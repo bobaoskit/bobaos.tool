@@ -80,7 +80,6 @@ const processDescriptionCmd = cmdArgs => {
     command: "description",
     args: null
   };
-  console_out(cmdArgs.type);
   if (cmdArgs.type === "Asterisk") {
     res.args = "*";
   }
@@ -197,8 +196,8 @@ let parseCmd = line => {
   let res = parser.getAST(line.trim());
   if (res.type === "command") {
     let cmdObject = res.children[0];
-    let command = processCmd(cmdObject);
-    return command;
+
+    return processCmd(cmdObject);
   }
 };
 

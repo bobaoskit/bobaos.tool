@@ -45,6 +45,6 @@ unwatch ::= "unwatch" WS* ( UIntList | UIntArray )
 ping ::= "ping" WS*
 state ::= "state" WS*
 reset ::= "reset" WS*
-getitem ::= "getitem" WS* ( Asterisk | IdentifierList | IdentifierArray )
+getitem ::= "getitem" WS* ( Asterisk | UIntList | UIntArray )
 progmode ::= "progmode" WS* ( Question | Value )
 help ::= "help" WS*

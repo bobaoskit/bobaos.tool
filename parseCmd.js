@@ -31,7 +31,7 @@ const processValueObject = valueObj => {
     res = null;
   }
   if (valueObj.type === "String") {
-    res = valueObj.text.trim();
+    res = JSON.parse(valueObj.text.trim());
   }
   if (valueObj.type === "Identifier") {
     res = valueObj.text.trim();
@@ -152,8 +152,8 @@ const processItemCmd = cmdArgs => {
     res.args = "*";
   }
 
-  if (cmdArgs.type === "IdentifierList" || cmdArgs.type === "IndentifierArray") {
-    res.args = processIdentifierArgs(cmdArgs.children);
+  if (cmdArgs.type === "UIntList" || cmdArgs.type === "UIntArray") {
+    res.args = processUIntListArgs(cmdArgs.children);
   }
 
   return res;

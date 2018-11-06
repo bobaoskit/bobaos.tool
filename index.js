@@ -1,12 +1,12 @@
 const readline = require("readline");
 
 const colors = require("colors/safe");
-const Bobaos = require("bobaos.sub");
+const Bobaos = require("bobaos.client");
 
 const parseCmd = require("./parseCmd");
 
 const App = params => {
-  let _params = { socketFile: "/var/run/myps/myipc.sock" };
+  let _params = {};
   Object.assign(_params, params);
 
   let bobaos = Bobaos(_params);
@@ -48,11 +48,13 @@ const App = params => {
     process.stdout.clearLine();
     process.stdout.cursorTo(0);
     console.log(msg);
+	  setTimeout( _ => {
     rl.prompt(true);
+	  }, 100);
   };
 
   console.log("hello, friend");
-  console.log(`connecting to ${_params.socketFile}`);
+  console.log(`connecting to ${_params.redis}`);
 
   // add upport for color output
   let mycolors = [];
@@ -90,11 +92,21 @@ const App = params => {
   };
 
   const formatDatapointDescription = t => {
-    return `#${t.id}: length = ${t.length}, dpt = ${t.dpt},  prio: ${t.flags.priority}  flags: [${
-      t.flags.communication ? "C" : "-"
-    }${t.flags.read ? "R" : "-"}${t.flags.write ? "W" : "-"}${t.flags.transmit ? "T" : "-"}${
-      t.flags.update ? "U" : "-"
-    }]`;
+    let valid = JSON.parse(t.valid);
+    if (!valid) {
+      return null;
+    }
+    let res = `#${t.id}: length = ${t.length}, `;
+    res += `dpt = ${t.dpt}, prio: ${t.flag_priority}, `;
+    res += `flags: [`;
+    res += JSON.parse(t.flag_communication) ? "C": "-";
+    res += JSON.parse(t.flag_read) ? "R": "-";
+    res += JSON.parse(t.flag_write) ? "W": "-";
+    res += JSON.parse(t.flag_transmit) ? "T": "-";
+    res += JSON.parse(t.flag_update) ? "U": "-";
+    res += `]`;
+
+    return res;
   };
 
   // register datapoint value listener
@@ -109,6 +121,11 @@ const App = params => {
     console_out(formatDatapointValue(payload));
   });
 
+  bobaos.on("server item", payload => {
+    let {id, value, raw} = payload;
+    console_out(`Server item indication: id = ${id}, value = ${value}, raw = ${raw}`);
+  });
+
   const processParsedCmd = async payload => {
     try {
       let { command, args } = payload;
@@ -119,15 +136,23 @@ const App = params => {
           break;
         case "get":
           res = await bobaos.getValue(args);
-          res.forEach(t => {
-            console_out(formatDatapointValue(t));
-          });
+          if (Array.isArray(res)) {
+            res.forEach(t => {
+              console_out(formatDatapointValue(t));
+            });
+          } else {
+            console_out(formatDatapointValue(res));
+          }
           break;
         case "stored":
           res = await bobaos.getStoredValue(args);
-          res.forEach(t => {
-            console_out(formatDatapointValue(t));
-          });
+          if (Array.isArray(res)) {
+            res.forEach(t => {
+              console_out(formatDatapointValue(t));
+            });
+          } else {
+            console_out(formatDatapointValue(res));
+          }
           break;
         case "read":
           res = await bobaos.readValue(args);
@@ -137,7 +162,7 @@ const App = params => {
             args = null;
           }
           res = await bobaos.getDescription(args);
-          res.map(formatDatapointDescription).forEach(console_out);
+          res.map(formatDatapointDescription).filter(t => t).forEach(console_out);
           break;
         case "getbyte":
           res = await bobaos.getParameterByte(args);
@@ -179,8 +204,10 @@ const App = params => {
           if (args !== "?") {
             await bobaos.setProgrammingMode(args);
           }
-          res = await bobaos.getProgrammingMode();
-          console_out(`BAOS module in programming mode: ${res}`);
+          // setTimeout(async _ => {
+            res = await bobaos.getProgrammingMode();
+            console_out(`BAOS module in programming mode: ${JSON.stringify(res.value[0])}`);
+          // }, 100);
           break;
         case "help":
           console_out(`:: To work with datapoints`);
@@ -196,7 +223,7 @@ const App = params => {
           console_out(` `);
           console_out(`:: BAOS services: `);
           console_out(`::> getbyte ( 1 2 3 | [1, 2, 3] ) `);
-          console_out(`::  getitem ( * | ServerItem1 Item2... | [Item1, Item2, ..] ) `);
+          console_out(`::  getitem ( * | 1 2...17 | [1, 2, .., 17] ) `);
           console_out(`::> progmode ( ? | true/false/1/0 ) `);
           console_out(` `);
           console_out(`:: General: `);

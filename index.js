@@ -1,7 +1,7 @@
 const readline = require("readline");
 
 const colors = require("colors/safe");
-const Bobaos = require("bobaos.client");
+const Bobaos = require("bobaos.sub");
 
 const parseCmd = require("./parseCmd");
 

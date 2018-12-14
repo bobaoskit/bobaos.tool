@@ -6,7 +6,7 @@ This is CLI tool to work with KNX Datapoint objects via BAOS(Bus Access Object S
 
 ## Installation
 
-First of all, be sure to have [myps.broker](https://github.com/mypubsub/myps.broker) and [bobaos.pub](https://github.com/bobaoskit/bobaos.pub) running, then install this app via node package manager:
+First of all, be sure to have [bobaos.pub](https://github.com/bobaoskit/bobaos.pub) running, then install this app via node package manager:
 
 ```
 sudo npm i -g bobaos.tool

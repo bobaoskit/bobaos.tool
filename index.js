@@ -1,3 +1,7 @@
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+
 const readline = require("readline");
 
 const colors = require("colors/safe");
@@ -5,11 +9,49 @@ const Bobaos = require("bobaos.sub");
 
 const parseCmd = require("./parseCmd");
 
+// config path
+const configPath = path.join(os.homedir(), ".config", "bobaos_tool.json");
+
 const App = params => {
   let _params = {};
   Object.assign(_params, params);
 
   let bobaos = Bobaos(_params);
+
+  /// init repl
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: "bobaos> ",
+    completer: completer
+  });
+
+  const console_out = msg => {
+    if (msg) {
+      process.stdout.clearLine();
+      process.stdout.cursorTo(0);
+      console.log(msg);
+      setTimeout(_ => {
+        rl.prompt(true);
+      }, 100);
+    }
+  };
+
+  let config = {};
+
+  try {
+    config = fs.readFileSync(configPath, "utf8");
+    config = JSON.parse(config);
+  } catch (e) {
+    console_out(`error reading config file: ${e.message}`);
+
+    // default colors
+    config.mycolors = {};
+  }
+
+  const writeConfigFile = _ => {
+    return fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
+  };
 
   bobaos.on("connect", _ => {
     console_out("connected to ipc, still not subscribed to channels");
@@ -36,31 +78,8 @@ const App = params => {
     return [hits.length ? hits : commandlist, line];
   }
 
-  /// init repl
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    prompt: "bobaos> ",
-    completer: completer
-  });
-
-  const console_out = msg => {
-    process.stdout.clearLine();
-    process.stdout.cursorTo(0);
-    console.log(msg);
-	  setTimeout( _ => {
-    rl.prompt(true);
-	  }, 100);
-  };
-
   console.log("hello, friend");
   console.log(`connecting to ${_params.redis}`);
-
-  // add upport for color output
-  let mycolors = [];
-  for (let i = 0; i < 1000; i += 1) {
-    mycolors.push("default");
-  }
 
   const formatDate = date => {
     let hours = date.getHours();
@@ -80,15 +99,24 @@ const App = params => {
     const strValue = `${formatDate(new Date())},    id: ${data.id}, value: ${data.value}, raw: [${data.raw}]`;
 
     // now color it
-    const datapointColor = mycolors[data.id];
-    if (datapointColor === "default") {
-      return strValue;
-    }
+    const datapointColor = config.mycolors[data.id.toString()] || "default";
     if (typeof colors[datapointColor] === "function") {
       return colors[datapointColor](strValue);
     }
 
     return strValue;
+  };
+
+  // only difference is that this function hides datapoints
+  const formatCastedDatapointValue = data => {
+    const datapointColor = config.mycolors[data.id.toString()];
+    // hidden datapoint support
+    if (datapointColor === "hide" || datapointColor === "hidden") {
+      return null;
+    }
+
+    // show as usual
+    return formatDatapointValue(data);
   };
 
   const formatDatapointDescription = t => {
@@ -99,11 +127,11 @@ const App = params => {
     let res = `#${t.id}: length = ${t.length}, `;
     res += `dpt = ${t.dpt}, prio: ${t.flag_priority}, `;
     res += `flags: [`;
-    res += JSON.parse(t.flag_communication) ? "C": "-";
-    res += JSON.parse(t.flag_read) ? "R": "-";
-    res += JSON.parse(t.flag_write) ? "W": "-";
-    res += JSON.parse(t.flag_transmit) ? "T": "-";
-    res += JSON.parse(t.flag_update) ? "U": "-";
+    res += JSON.parse(t.flag_communication) ? "C" : "-";
+    res += JSON.parse(t.flag_read) ? "R" : "-";
+    res += JSON.parse(t.flag_write) ? "W" : "-";
+    res += JSON.parse(t.flag_transmit) ? "T" : "-";
+    res += JSON.parse(t.flag_update) ? "U" : "-";
     res += `]`;
 
     return res;
@@ -113,16 +141,16 @@ const App = params => {
   bobaos.on("datapoint value", payload => {
     // if multiple values
     if (Array.isArray(payload)) {
-      payload.map(formatDatapointValue).forEach(console_out);
+      payload.map(formatCastedDatapointValue).forEach(console_out);
 
       return;
     }
 
-    console_out(formatDatapointValue(payload));
+    console_out(formatCastedDatapointValue(payload));
   });
 
   bobaos.on("server item", payload => {
-    let {id, value, raw} = payload;
+    let { id, value, raw } = payload;
     console_out(`Server item indication: id = ${id}, value = ${value}, raw = ${raw}`);
   });
 
@@ -162,7 +190,10 @@ const App = params => {
             args = null;
           }
           res = await bobaos.getDescription(args);
-          res.map(formatDatapointDescription).filter(t => t).forEach(console_out);
+          res
+            .map(formatDatapointDescription)
+            .filter(t => t)
+            .forEach(console_out);
           break;
         case "getbyte":
           res = await bobaos.getParameterByte(args);
@@ -171,14 +202,16 @@ const App = params => {
         case "watch":
           args.forEach(a => {
             let { id, color } = a;
-            mycolors[id] = color;
+            config.mycolors[id.toString()] = color;
             console_out(`datapoint ${id} value is now in ${color}`);
           });
           break;
         case "unwatch":
           args.forEach(id => {
-            mycolors[id] = "default";
-            console_out(`datapoint ${id} value is now in default color`);
+            if (Object.prototype.hasOwnProperty.call(config.mycolors, id.toString())) {
+              delete config.mycolors[id.toString()];
+              console_out(`datapoint ${id} value is now in default color`);
+            }
           });
           break;
         case "ping":
@@ -205,8 +238,8 @@ const App = params => {
             await bobaos.setProgrammingMode(args);
           }
           // setTimeout(async _ => {
-            res = await bobaos.getProgrammingMode();
-            console_out(`BAOS module in programming mode: ${JSON.stringify(res.value[0])}`);
+          res = await bobaos.getProgrammingMode();
+          console_out(`BAOS module in programming mode: ${JSON.stringify(res.value[0])}`);
           // }, 100);
           break;
         case "help":
@@ -248,6 +281,7 @@ const App = params => {
       console_out(e.message);
     }
   }).on("close", () => {
+    writeConfigFile();
     process.exit(0);
   });
 };

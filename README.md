@@ -28,7 +28,7 @@ bobaos> help
 ::  description ( * | 1 2 3 | [1, 2, 3] )
 
 :: Helpful in bus monitoring:
-::> watch ( 1: red | [1: red, 2: green, 3: underline] )
+::> watch ( 1: red | [1: red, 2: green, 3: underline, 4: hide, 5: hidden] )
 ::  unwatch ( 1 2 3 | [1, 2, 3] )
 
 :: BAOS services:
@@ -56,5 +56,4 @@ bobaos> description 1 101
 ```
 
 This app uses ebnf parser to process commands, so it is possible to use lists, arrays in command parameters.
-
 

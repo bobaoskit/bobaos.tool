@@ -251,7 +251,7 @@ const App = params => {
           console_out(`::  description ( * | 1 2 3 | [1, 2, 3] )`);
           console_out(` `);
           console_out(`:: Helpful in bus monitoring:`);
-          console_out(`::> watch ( 1: red | [1: red, 2: green, 3: underline] ) `);
+          console_out(`::> watch ( 1: red | [1: red, 2: green, 3: underline, 4: hide, 5: hidden] ) `);
           console_out(`::  unwatch ( 1 2 3 | [1, 2, 3] )`);
           console_out(` `);
           console_out(`:: BAOS services: `);

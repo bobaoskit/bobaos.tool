@@ -1,5 +1,3 @@
-const fs = require("fs");
-const os = require("os");
 const path = require("path");
 
 const readline = require("readline");
@@ -8,9 +6,8 @@ const colors = require("colors/safe");
 const Bobaos = require("bobaos.sub");
 
 const parseCmd = require("./parseCmd");
-
-// config path
-const configPath = path.join(os.homedir(), ".config", "bobaos_tool.json");
+const configFile = require("./config");
+const config = configFile.get();
 
 const App = params => {
   let _params = {};
@@ -35,22 +32,6 @@ const App = params => {
         rl.prompt(true);
       }, 100);
     }
-  };
-
-  let config = {};
-
-  try {
-    config = fs.readFileSync(configPath, "utf8");
-    config = JSON.parse(config);
-  } catch (e) {
-    console_out(`error reading config file: ${e.message}`);
-
-    // default colors
-    config.mycolors = {};
-  }
-
-  const writeConfigFile = _ => {
-    return fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
   };
 
   bobaos.on("connect", _ => {
@@ -99,7 +80,7 @@ const App = params => {
     const strValue = `${formatDate(new Date())},    id: ${data.id}, value: ${data.value}, raw: [${data.raw}]`;
 
     // now color it
-    const datapointColor = config.mycolors[data.id.toString()] || "default";
+    const datapointColor = config.watch[data.id.toString()] || "default";
     if (typeof colors[datapointColor] === "function") {
       return colors[datapointColor](strValue);
     }
@@ -109,7 +90,7 @@ const App = params => {
 
   // only difference is that this function hides datapoints
   const formatCastedDatapointValue = data => {
-    const datapointColor = config.mycolors[data.id.toString()];
+    const datapointColor = config.watch[data.id.toString()];
     // hidden datapoint support
     if (datapointColor === "hide" || datapointColor === "hidden") {
       return null;
@@ -202,14 +183,14 @@ const App = params => {
         case "watch":
           args.forEach(a => {
             let { id, color } = a;
-            config.mycolors[id.toString()] = color;
+            config.watch[id.toString()] = color;
             console_out(`datapoint ${id} value is now in ${color}`);
           });
           break;
         case "unwatch":
           args.forEach(id => {
-            if (Object.prototype.hasOwnProperty.call(config.mycolors, id.toString())) {
-              delete config.mycolors[id.toString()];
+            if (Object.prototype.hasOwnProperty.call(config.watch, id.toString())) {
+              delete config.watch[id.toString()];
               console_out(`datapoint ${id} value is now in default color`);
             }
           });
@@ -281,7 +262,7 @@ const App = params => {
       console_out(e.message);
     }
   }).on("close", () => {
-    writeConfigFile();
+    configFile.write(config);
     process.exit(0);
   });
 };
